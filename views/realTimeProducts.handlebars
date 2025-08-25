@@ -1,0 +1,49 @@
+<h1>Lista de Productos en Tiempo Real</h1>
+<ul id='productsList'>
+  {{#each products}}
+    <li data-id='{{this.id}}'>{{this.title}} - ${{this.price}}</li>
+  {{/each}}
+</ul>
+
+<hr />
+
+<h2>Agregar Producto</h2>
+<form id='addProductForm'>
+  <input type='text' name='title' placeholder='Título' required />
+  <input type='text' name='description' placeholder='Descripción' required />
+  <input type='text' name='code' placeholder='Código' required />
+  <input type='number' name='price' placeholder='Precio' required />
+  <input type='number' name='stock' placeholder='Stock' required />
+  <input type='text' name='category' placeholder='Categoría' required />
+  <button type='submit'>Crear</button>
+</form>
+
+<hr />
+
+<h2>Eliminar Producto</h2>
+<form id='deleteProductForm'>
+  <input type='text' name='id' placeholder='ID del producto' required />
+  <button type='submit'>Eliminar</button>
+</form>
+
+<script src='/socket.io/socket.io.js'></script>
+<script>
+  const socket = io(); // === Manejo de lista en tiempo real ===
+  socket.on('productAdded', (product) => { const list =
+  document.getElementById('productsList'); const li =
+  document.createElement('li'); li.textContent = `${product.title} -
+  $${product.price}`; li.dataset.id = product.id; list.appendChild(li); });
+  socket.on('productDeleted', (pid) => { const item =
+  document.querySelector(`li[data-id='${pid}']`); if (item) item.remove(); });
+  // === Formulario: crear producto === const addForm =
+  document.getElementById('addProductForm'); addForm.addEventListener('submit',
+  (e) => { e.preventDefault(); const formData = new FormData(addForm); const
+  product = Object.fromEntries(formData.entries()); product.price =
+  parseFloat(product.price); product.stock = parseInt(product.stock);
+  product.status = true; product.thumbnails = []; socket.emit('createProduct',
+  product); addForm.reset(); }); // === Formulario: eliminar producto === const
+  deleteForm = document.getElementById('deleteProductForm');
+  deleteForm.addEventListener('submit', (e) => { e.preventDefault(); const id =
+  deleteForm.elements['id'].value; socket.emit('deleteProduct', id);
+  deleteForm.reset(); });
+</script>

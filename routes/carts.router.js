@@ -15,10 +15,17 @@ router.get('/:cid', async (req, res) => {
 });
 
 router.post('/:cid/product/:pid', async (req, res) => {
-  const cart = await manager.addProductToCart(
-    parseInt(req.params.cid),
-    req.params.pid
-  );
+  const { cid, pid } = req.params;
+
+  if (!cid || isNaN(cid)) {
+    return res
+      .status(400)
+      .json({ error: "El 'cid' debe ser un número válido" });
+  }
+  if (!pid) {
+    return res.status(400).json({ error: "El 'pid' es obligatorio" });
+  }
+  const cart = await manager.addProductToCart(parseInt(cid), pid);
   if (!cart) return res.status(404).send('Carrito no encontrado');
   res.json(cart);
 });

@@ -35,72 +35,74 @@ function validarProductBody(body) {
 }
 
 router.get('/', async (req, res) => {
-  const products = await manager.getAll();
-  res.json(products);
+  try {
+    const products = await manager.getAll();
+    res.json(products);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener productos' });
+  }
 });
 
 router.get('/:pid', async (req, res) => {
-  const product = await manager.getById(req.params.pid);
-  if (!product) return res.status(404).send('Producto no encontrado');
-  res.json(product);
+  try {
+    const product = await manager.getById(req.params.pid);
+    if (!product) return res.status(404).send('Producto no encontrado');
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener producto' });
+  }
 });
 
 router.post('/', async (req, res) => {
-  const {
-    title,
-    description,
-    code,
-    price,
-    status,
-    stock,
-    category,
-    thumbnails,
-  } = req.body;
+  try {
+    const error = validarProductBody(req.body);
+    if (error) return res.status(400).json({ error });
 
-  const error = validarProductBody(req.body);
-  if (error) return res.status(400).json({ error });
-
-  const product = await manager.addProduct({
-    title,
-    description,
-    code,
-    price,
-    status,
-    stock,
-    category,
-    thumbnails,
-  });
-  res.status(201).json(product);
+    const product = await manager.addProduct(req.body);
+    res.status(201).json(product);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al crear producto' });
+  }
 });
 
 router.put('/:pid', async (req, res) => {
-  const allowedFields = [
-    'title',
-    'description',
-    'code',
-    'price',
-    'status',
-    'stock',
-    'category',
-    'thumbnails',
-  ];
-  const invalidFields = Object.keys(req.body).filter(
-    (f) => !allowedFields.includes(f)
-  );
-  if (invalidFields.length > 0) {
-    return res
-      .status(400)
-      .json({ error: `Campos no permitidos: ${invalidFields.join(', ')}` });
+  try {
+    const allowedFields = [
+      'title',
+      'description',
+      'code',
+      'price',
+      'status',
+      'stock',
+      'category',
+      'thumbnails',
+    ];
+    const invalidFields = Object.keys(req.body).filter(
+      (f) => !allowedFields.includes(f)
+    );
+    if (invalidFields.length > 0) {
+      return res
+        .status(400)
+        .json({ error: `Campos no permitidos: ${invalidFields.join(', ')}` });
+    }
+
+    const updated = await manager.updateProduct(req.params.pid, req.body);
+    if (!updated) return res.status(404).send('Producto no encontrado');
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar producto' });
   }
-  const updated = await manager.updateProduct(req.params.pid, req.body);
-  if (!updated) return res.status(404).send('Producto no encontrado');
-  res.json(updated);
 });
 
 router.delete('/:pid', async (req, res) => {
-  const deleted = await manager.deleteProduct(req.params.pid);
-  if (!deleted) return res.status(404).send('Producto no encontrado');
-  res.sendStatus(204);
+  try {
+    const deleted = await manager.deleteProduct(req.params.pid);
+    if (!deleted) return res.status(404).send('Producto no encontrado');
+    res.sendStatus(204);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar producto' });
+  }
 });
 
 module.exports = router;

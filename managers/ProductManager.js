@@ -3,8 +3,13 @@ const path = './data/products.json';
 
 class ProductManager {
   async getAll() {
-    const data = await fs.readFile(path, 'utf8');
-    return JSON.parse(data);
+    try {
+      const data = await fs.readFile(path, 'utf8');
+      return JSON.parse(data);
+    } catch (err) {
+      console.error('Error leyendo products.json', err);
+      throw err;
+    }
   }
 
   async getById(id) {

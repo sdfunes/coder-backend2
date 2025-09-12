@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Product } from '../models/Product.js';
+import { Product } from '../dao/models/productsModel.js';
 
 export const productsRouter = Router();
 
@@ -88,3 +88,5 @@ productsRouter.delete('/:pid', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+export default productsRouter;

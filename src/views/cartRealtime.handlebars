@@ -1,0 +1,25 @@
+<h1>Carrito {{cart._id}}</h1>
+
+<ul id='cart-products'>
+  {{#each cart.products}}
+    <li id='cart-prod-{{this.product._id}}'>
+      <b>{{this.product.title}}</b>
+      - ${{this.product.price}}
+      (Cantidad:
+      {{this.quantity}})
+    </li>
+  {{/each}}
+</ul>
+
+<button id='empty-cart'>Vaciar carrito</button>
+
+<script src='/socket.io/socket.io.js'></script>
+<script src='/js/cartRealtime.js'></script>
+<script>
+  const cartId = "{{cart._id}}"; socket.on("cartUpdated", ({ cid, cart }) => {
+  if (cid !== cartId) return; // solo actualiza el carrito actual
+  productsList.innerHTML = ""; cart.products.forEach(p => { const li =
+  document.createElement("li"); li.innerHTML = `<b>${p.product.title}</b> -
+  $${p.product.price} (Cantidad: ${p.quantity})`; productsList.appendChild(li);
+  }); });
+</script>

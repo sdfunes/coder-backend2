@@ -1,29 +1,43 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import handlebars from 'express-handlebars';
+import { Server } from 'socket.io';
+
 import viewsRouter from './routes/views.router.js';
+import productsRouter from './routes/products.router.js';
+import { config } from './config/config.js';
 
 const app = express();
+const PORT = config.PORT;
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('./src/public'));
+
+// Configuración Handlebars
 app.engine('handlebars', handlebars.engine());
 app.set('view engine', 'handlebars');
 app.set('views', './src/views');
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
+// Routers
 app.use('/', viewsRouter);
+app.use('/api/products', productsRouter);
 
-// Conectar a MongoDB
+// MongoDB
 try {
-  await mongoose.connect('mongodb://localhost:27017/ecommerce', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-  console.log('MongoDB conectado');
+  await mongoose.connect(config.MONGO_URL, { dbName: config.DB_NAME });
+  console.log(`DB online!`);
 } catch (error) {
-  console.error('Error MongoDB:', error);
-  process.exit();
+  console.log(`Error al conectar a db: ${error.message}`);
 }
 
-app.listen(8080, () => console.log('Servidor en puerto 8080'));
+// Servidor + WebSockets
+const httpServer = app.listen(PORT, () =>
+  console.log(`Servidor corriendo en http://localhost:${PORT}`)
+);
+
+const io = new Server(httpServer);
+
+// Exportamos io para usar en las rutas
+app.set('socketio', io);

@@ -8,7 +8,8 @@
 <button onclick="addToCart('{{product._id}}')">Agregar al carrito</button>
 
 <script>
-  async function addToCart(pid) { const cartId = "64f9c24e3a4b4c2a7f01a123";
-  await fetch(`/api/carts/${cartId}/product/${pid}`, { method: "POST" });
-  alert("Producto agregado!"); }
+  async function addToCart(pid, cartId) { try { await
+  fetch(`/api/carts/${cartId}/product/${pid}`, { method: "POST" });
+  alert("Producto agregado!"); } catch (error) { console.error("Error al agregar
+  producto:", error); } }
 </script>

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Cart } from '../models/Cart.js';
+import { Cart } from '../dao/models/cartsModel.js';
 
 export const cartsRouter = Router();
 
@@ -37,6 +37,7 @@ cartsRouter.post('/:cid/product/:pid', async (req, res) => {
     }
 
     await cart.save();
+    io.emit('cartUpdated', { cid, cart });
     res.json(cart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -48,7 +49,12 @@ cartsRouter.delete('/:cid/products/:pid', async (req, res) => {
   const { cid, pid } = req.params;
   const cart = await Cart.findById(cid);
   cart.products = cart.products.filter((p) => p.product.toString() !== pid);
-  await cart.save();
+  try {
+    await cart.save();
+  } catch (error) {
+    console.error('Error al guardar el carrito:', error);
+  }
+  io.emit('cartUpdated', { cid, cart });
   res.json(cart);
 });
 
@@ -57,6 +63,7 @@ cartsRouter.put('/:cid', async (req, res) => {
   const { cid } = req.params;
   const { products } = req.body;
   const cart = await Cart.findByIdAndUpdate(cid, { products }, { new: true });
+  io.emit('cartUpdated', { cid, cart });
   res.json(cart);
 });
 
@@ -67,7 +74,12 @@ cartsRouter.put('/:cid/products/:pid', async (req, res) => {
   const cart = await Cart.findById(cid);
   const item = cart.products.find((p) => p.product.toString() === pid);
   if (item) item.quantity = quantity;
-  await cart.save();
+  try {
+    await cart.save();
+  } catch (error) {
+    console.error('Error al guardar el carrito:', error);
+  }
+  io.emit('cartUpdated', { cid, cart });
   res.json(cart);
 });
 
@@ -78,5 +90,8 @@ cartsRouter.delete('/:cid', async (req, res) => {
     { products: [] },
     { new: true }
   );
+  io.emit('cartUpdated', { cid, cart });
   res.json(cart);
 });
+
+export default cartsRouter;

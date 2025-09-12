@@ -4,7 +4,6 @@ import Cart from '../dao/models/cartsModel.js';
 
 const router = Router();
 
-// Vista con paginación de productos
 router.get('/products', async (req, res) => {
   try {
     const { limit = 10, page = 1, sort, query } = req.query;
@@ -55,7 +54,6 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// Vista detalle de producto
 router.get('/products/:pid', async (req, res) => {
   try {
     const product = await Product.findById(req.params.pid).lean();
@@ -72,7 +70,6 @@ router.get('/products/:pid', async (req, res) => {
   }
 });
 
-// Vista carrito (estática, sin realtime)
 router.get('/carts/:cid', async (req, res) => {
   try {
     const cart = await Cart.findById(req.params.cid)
@@ -87,13 +84,21 @@ router.get('/carts/:cid', async (req, res) => {
   }
 });
 
-// Nueva vista con WebSockets para productos
 router.get('/realtimeproducts', async (req, res) => {
-  const products = await Product.find().lean();
-  res.render('realTimeProducts', { products });
+  try {
+    const products = await Product.find().lean();
+    let cart = await Cart.findOne();
+    if (!cart) {
+      cart = await Cart.create({ products: [] });
+    }
+    res.render('realtimeproducts', { products, cartId: cart._id });
+  } catch (error) {
+    res
+      .status(500)
+      .send('Error al cargar productos en tiempo real: ' + error.message);
+  }
 });
 
-// Nueva vista con WebSockets para carrito
 router.get('/carts/:cid/realtime', async (req, res) => {
   try {
     const cart = await Cart.findById(req.params.cid)

@@ -5,7 +5,9 @@ import { Server } from 'socket.io';
 
 import viewsRouter from './routes/views.router.js';
 import productsRouter from './routes/products.router.js';
+import { cartsRouter } from './routes/carts.router.js';
 import { config } from './config/config.js';
+import Product from './dao/models/productsModel.js';
 
 const app = express();
 const PORT = config.PORT;
@@ -23,6 +25,7 @@ app.set('views', './src/views');
 // Routers
 app.use('/', viewsRouter);
 app.use('/api/products', productsRouter);
+app.use('/api/carts', cartsRouter);
 
 // MongoDB
 try {
@@ -32,12 +35,33 @@ try {
   console.log(`Error al conectar a db: ${error.message}`);
 }
 
-// Servidor + WebSockets
 const httpServer = app.listen(PORT, () =>
   console.log(`Servidor corriendo en http://localhost:${PORT}`)
 );
 
+//Sockets
 const io = new Server(httpServer);
 
-// Exportamos io para usar en las rutas
+io.on('connection', (socket) => {
+  console.log('Cliente conectado');
+
+  socket.on('createProduct', async (productData) => {
+    try {
+      const product = await Product.create(productData);
+      io.emit('productAdded', product);
+    } catch (error) {
+      console.error('Error al crear producto:', error);
+    }
+  });
+
+  socket.on('deleteProduct', async (pid) => {
+    try {
+      await Product.findByIdAndDelete(pid);
+      io.emit('productDeleted', pid);
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+    }
+  });
+});
+
 app.set('socketio', io);

@@ -3,7 +3,6 @@ import { Product } from '../dao/models/productsModel.js';
 
 export const productsRouter = Router();
 
-// GET con paginación, query y sort
 productsRouter.get('/', async (req, res) => {
   try {
     const { limit = 10, page = 1, sort, query } = req.query;
@@ -20,7 +19,7 @@ productsRouter.get('/', async (req, res) => {
       sort: sort ? { price: sort === 'asc' ? 1 : -1 } : {},
     };
 
-    const result = await Product.paginate(filter, options); // 👈 necesitamos mongoose-paginate-v2
+    const result = await Product.paginate(filter, options);
 
     res.json({
       status: 'success',
@@ -43,7 +42,6 @@ productsRouter.get('/', async (req, res) => {
   }
 });
 
-// GET /:pid
 productsRouter.get('/:pid', async (req, res) => {
   try {
     const product = await Product.findById(req.params.pid);
@@ -57,7 +55,6 @@ productsRouter.get('/:pid', async (req, res) => {
   }
 });
 
-// POST /
 productsRouter.post('/', async (req, res) => {
   try {
     const newProduct = await Product.create(req.body);
@@ -67,7 +64,6 @@ productsRouter.post('/', async (req, res) => {
   }
 });
 
-// PUT /:pid
 productsRouter.put('/:pid', async (req, res) => {
   try {
     const updated = await Product.findByIdAndUpdate(req.params.pid, req.body, {
@@ -79,7 +75,6 @@ productsRouter.put('/:pid', async (req, res) => {
   }
 });
 
-// DELETE /:pid
 productsRouter.delete('/:pid', async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.pid);

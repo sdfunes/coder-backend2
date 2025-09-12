@@ -1,7 +1,11 @@
 <h1>Lista de Productos en Tiempo Real</h1>
+
 <ul id='productsList'>
   {{#each products}}
-    <li data-id='{{this.id}}'>{{this.title}} - ${{this.price}}</li>
+    <li data-id='{{this._id}}'>
+      {{this.title}}
+      - ${{this.price}}
+    </li>
   {{/each}}
 </ul>
 
@@ -28,22 +32,20 @@
 
 <script src='/socket.io/socket.io.js'></script>
 <script>
-  const socket = io(); // === Manejo de lista en tiempo real ===
-  socket.on('productAdded', (product) => { const list =
-  document.getElementById('productsList'); const li =
-  document.createElement('li'); li.textContent = `${product.title} -
-  $${product.price}`; li.dataset.id = product.id; list.appendChild(li); });
-  socket.on('productDeleted', (pid) => { const item =
-  document.querySelector(`li[data-id='${pid}']`); if (item) item.remove(); });
-  // === Formulario: crear producto === const addForm =
+  const socket = io(); const addForm =
   document.getElementById('addProductForm'); addForm.addEventListener('submit',
   (e) => { e.preventDefault(); const formData = new FormData(addForm); const
   product = Object.fromEntries(formData.entries()); product.price =
   parseFloat(product.price); product.stock = parseInt(product.stock);
   product.status = true; product.thumbnails = []; socket.emit('createProduct',
-  product); addForm.reset(); }); // === Formulario: eliminar producto === const
-  deleteForm = document.getElementById('deleteProductForm');
-  deleteForm.addEventListener('submit', (e) => { e.preventDefault(); const id =
-  deleteForm.elements['id'].value; socket.emit('deleteProduct', id);
-  deleteForm.reset(); });
+  product); addForm.reset(); }); const deleteForm =
+  document.getElementById('deleteProductForm');
+  deleteForm.addEventListener('submit', (e) => { e.preventDefault(); const pid =
+  deleteForm.elements['id'].value; socket.emit('deleteProduct', pid);
+  deleteForm.reset(); }); socket.on('productAdded', (product) => { const list =
+  document.getElementById('productsList'); const li =
+  document.createElement('li'); li.dataset.id = product._id; li.textContent =
+  `${product.title} - $${product.price}`; list.appendChild(li); });
+  socket.on('productDeleted', (pid) => { const item =
+  document.querySelector(`li[data-id="${pid}"]`); if (item) item.remove(); });
 </script>

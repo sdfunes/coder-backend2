@@ -5,13 +5,11 @@
     <li>
       <b>{{this.title}}</b>
       - ${{this.price}}
-      <!-- Botón para agregar al carrito -->
       <button class='add-to-cart' data-id='{{this._id}}'>Agregar al carrito</button>
     </li>
   {{/each}}
 </ul>
 
-<!-- Paginación -->
 <div>
   {{#if hasPrevPage}}
     <a href='{{prevLink}}'>Página Anterior</a>

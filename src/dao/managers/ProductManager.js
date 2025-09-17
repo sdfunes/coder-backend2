@@ -1,48 +1,66 @@
-const fs = require('fs').promises;
-const path = './data/products.json';
+import Product from '../dao/models/product.model.js';
 
-class ProductManager {
-  async getAll() {
-    try {
-      const data = await fs.readFile(path, 'utf8');
-      return JSON.parse(data);
-    } catch (err) {
-      console.error('Error leyendo products.json', err);
-      throw err;
+export default class ProductManager {
+  async getProducts(filter = {}, options = {}) {
+    return await Product.paginate(filter, options);
+  }
+
+  async getAllProducts(lean = false) {
+    return lean ? await Product.find().lean() : await Product.find();
+  }
+
+  async getProductById(pid, lean = false) {
+    return lean
+      ? await Product.findById(pid).lean()
+      : await Product.findById(pid);
+  }
+
+  async createProduct(data) {
+    const { title, description, code, price, stock, category, thumbnails } =
+      data;
+
+    if (!title || !description || !code || !price || !stock || !category) {
+      throw new Error('Faltan campos obligatorios');
     }
+
+    if (
+      typeof title !== 'string' ||
+      typeof description !== 'string' ||
+      typeof code !== 'string'
+    ) {
+      throw new Error('Título, descripción y código deben ser strings');
+    }
+
+    if (isNaN(price) || price <= 0) {
+      throw new Error('Precio debe ser un número mayor a 0');
+    }
+
+    if (!Number.isInteger(stock) || stock < 0) {
+      throw new Error('Stock debe ser un número entero >= 0');
+    }
+
+    const existeCodigo = await Product.findOne({ code });
+    if (existeCodigo) {
+      throw new Error('El código de producto ya existe');
+    }
+
+    return await Product.create({
+      title,
+      description,
+      code,
+      price,
+      stock,
+      category,
+      status: true,
+      thumbnails: thumbnails || [],
+    });
   }
 
-  async getById(id) {
-    const products = await this.getAll();
-    return products.find((p) => p.id == id);
-  }
-
-  async addProduct(product) {
-    const products = await this.getAll();
-    const newId = Date.now();
-    const newProduct = { id: newId, ...product };
-    products.push(newProduct);
-    await fs.writeFile(path, JSON.stringify(products, null, 2));
-    return newProduct;
-  }
-
-  async updateProduct(id, updateData) {
-    const products = await this.getAll();
-    const index = products.findIndex((p) => p.id == id);
-    if (index === -1) return null;
-    updateData.id = products[index].id; // No modificar ID
-    products[index] = { ...products[index], ...updateData };
-    await fs.writeFile(path, JSON.stringify(products, null, 2));
-    return products[index];
+  async updateProduct(id, data) {
+    return await Product.findByIdAndUpdate(id, data, { new: true });
   }
 
   async deleteProduct(id) {
-    let products = await this.getAll();
-    const initialLength = products.length;
-    products = products.filter((p) => p.id != id);
-    await fs.writeFile(path, JSON.stringify(products, null, 2));
-    return products.length < initialLength;
+    return await Product.findByIdAndDelete(id);
   }
 }
-
-module.exports = ProductManager;

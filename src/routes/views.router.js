@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import Product from '../dao/models/productsModel.js';
-import Cart from '../dao/models/cartsModel.js';
+import ProductManager from '../dao/managers/ProductManager.js';
+import CartManager from '../dao/managers/CartManager.js';
 
 const router = Router();
+const productManager = new ProductManager();
+const cartManager = new CartManager();
 
 router.get('/products', async (req, res) => {
   try {
@@ -20,18 +22,15 @@ router.get('/products', async (req, res) => {
     const options = {
       page: parseInt(page),
       limit: parseInt(limit),
+      sort: sort ? { price: sort === 'asc' ? 1 : -1 } : {},
       lean: true,
     };
 
-    if (sort) {
-      options.sort = { price: sort === 'asc' ? 1 : -1 };
-    }
-
-    const result = await Product.paginate(filter, options);
+    const result = await productManager.getProducts(filter, options);
 
     let cartId = req.session?.cartId;
     if (!cartId) {
-      const newCart = await Cart.create({ products: [] });
+      const newCart = await cartManager.createCart();
       cartId = newCart._id.toString();
       if (req.session) req.session.cartId = cartId;
     }
@@ -56,14 +55,16 @@ router.get('/products', async (req, res) => {
 
 router.get('/products/:pid', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.pid).lean();
+    const product = await productManager.getProductById(req.params.pid, true); // lean = true
     if (!product) return res.status(404).send('Producto no encontrado');
+
     let cartId = req.session?.cartId;
     if (!cartId) {
-      const newCart = await Cart.create({ products: [] });
+      const newCart = await cartManager.createCart();
       cartId = newCart._id.toString();
       if (req.session) req.session.cartId = cartId;
     }
+
     res.render('productDetail', { product, cartId });
   } catch (error) {
     res.status(500).send('Error al obtener producto: ' + error.message);
@@ -72,10 +73,7 @@ router.get('/products/:pid', async (req, res) => {
 
 router.get('/carts/:cid', async (req, res) => {
   try {
-    const cart = await Cart.findById(req.params.cid)
-      .populate('products.product')
-      .lean();
-
+    const cart = await cartManager.getCartById(req.params.cid);
     if (!cart) return res.status(404).send('Carrito no encontrado');
 
     res.render('cart', { cart });
@@ -86,10 +84,10 @@ router.get('/carts/:cid', async (req, res) => {
 
 router.get('/realtimeproducts', async (req, res) => {
   try {
-    const products = await Product.find().lean();
-    let cart = await Cart.findOne();
+    const products = await productManager.getAllProducts(true);
+    let cart = await cartManager.getAnyCart();
     if (!cart) {
-      cart = await Cart.create({ products: [] });
+      cart = await cartManager.createCart();
     }
     res.render('realtimeproducts', { products, cartId: cart._id });
   } catch (error) {
@@ -101,10 +99,7 @@ router.get('/realtimeproducts', async (req, res) => {
 
 router.get('/carts/:cid/realtime', async (req, res) => {
   try {
-    const cart = await Cart.findById(req.params.cid)
-      .populate('products.product')
-      .lean();
-
+    const cart = await cartManager.getCartById(req.params.cid);
     if (!cart) return res.status(404).send('Carrito no encontrado');
 
     res.render('cartRealtime', { cart });

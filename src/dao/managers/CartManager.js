@@ -1,5 +1,5 @@
-import { Cart } from '../dao/models/cartsModel.js';
-import { Product } from '../dao/models/productsModel.js';
+import { Cart } from '../models/cartsModel.js';
+import { Product } from '../models/productsModel.js';
 import mongoose from 'mongoose';
 
 export default class CartManager {
@@ -45,6 +45,13 @@ export default class CartManager {
   }
 
   async updateCart(cid, products) {
+    for (const p of products) {
+      const exists = await Product.findById(p.product);
+      if (!exists) {
+        throw new Error(`Producto con id ${p.product} no encontrado`);
+      }
+    }
+
     const productsToUpdate = products.map((p) => ({
       product: new mongoose.Types.ObjectId(p.product),
       quantity: p.quantity,

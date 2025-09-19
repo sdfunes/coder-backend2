@@ -1,4 +1,4 @@
-import Product from '../dao/models/product.model.js';
+import Product from '../models/productsModel.js';
 
 export default class ProductManager {
   async getProducts(filter = {}, options = {}) {

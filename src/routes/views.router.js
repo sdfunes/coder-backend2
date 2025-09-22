@@ -85,11 +85,7 @@ router.get('/carts/:cid', async (req, res) => {
 router.get('/realtimeproducts', async (req, res) => {
   try {
     const products = await productManager.getAllProducts(true);
-    let cart = await cartManager.getAnyCart();
-    if (!cart) {
-      cart = await cartManager.createCart();
-    }
-    res.render('realtimeproducts', { products, cartId: cart._id });
+    res.render('realTimeProducts', { products });
   } catch (error) {
     res
       .status(500)

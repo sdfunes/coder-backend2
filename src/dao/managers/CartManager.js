@@ -12,10 +12,6 @@ export default class CartManager {
     return await Cart.findById(cid).populate('products.product');
   }
 
-  async getAnyCart() {
-    return await Cart.findOne();
-  }
-
   async addProductToCart(cid, pid) {
     const producto = await Product.findById(pid);
     if (!producto) throw new Error('Producto no encontrado');

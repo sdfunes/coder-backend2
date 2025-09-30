@@ -6,7 +6,9 @@ import { Server } from 'socket.io';
 import viewsRouter from './routes/views.router.js';
 import productsRouter from './routes/products.router.js';
 import { cartsRouter } from './routes/carts.router.js';
+import { sessionRouter } from './routes/sessions.router.js';
 import { config } from './config/config.js';
+import { auth } from './middleware/auth.js';
 import Product from './dao/models/productsModel.js';
 
 const app = express();
@@ -26,6 +28,7 @@ app.set('views', './src/views');
 app.use('/', viewsRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
+app.use('/api/sessions', sessionRouter);
 
 // MongoDB
 try {

@@ -1,14 +1,16 @@
 import express from 'express';
+import passport from 'passport';
+
 import mongoose from 'mongoose';
 import handlebars from 'express-handlebars';
 import { Server } from 'socket.io';
-
+import { config } from './config/config.js';
 import viewsRouter from './routes/views.router.js';
 import productsRouter from './routes/products.router.js';
 import { cartsRouter } from './routes/carts.router.js';
+import { initializePassport } from './config/passport.config.js';
 import { sessionRouter } from './routes/sessions.router.js';
-import { config } from './config/config.js';
-import { auth } from './middleware/auth.js';
+
 import Product from './dao/models/productsModel.js';
 
 const app = express();
@@ -18,6 +20,8 @@ const PORT = config.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('./src/public'));
+initializePassport();
+app.use(passport.initialize());
 
 // Configuración Handlebars
 app.engine('handlebars', handlebars.engine());

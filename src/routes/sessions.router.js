@@ -5,12 +5,12 @@ import UserManager from '../dao/managers/UserManager.js';
 import CartManager from '../dao/managers/CartManager.js';
 import { config } from '../config/config.js';
 
-const router = Router();
+export const sessionRouter = Router();
 const userManager = new UserManager();
 const cartManager = new CartManager();
 
 // REGISTER (crea usuario + carrito)
-router.post('/register', async (req, res) => {
+sessionRouter.post('/register', async (req, res) => {
   try {
     const { first_name, last_name, email, age, password } = req.body;
     if (!first_name || !last_name || !email || !password) {
@@ -36,7 +36,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', (req, res, next) => {
+sessionRouter.post('/login', (req, res, next) => {
   passport.authenticate('login', { session: false }, (err, user, info) => {
     if (err) return next(err);
     if (!user)
@@ -56,7 +56,7 @@ router.post('/login', (req, res, next) => {
   })(req, res, next);
 });
 
-router.get(
+sessionRouter.get(
   '/current',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
@@ -69,4 +69,4 @@ router.get(
   }
 );
 
-export default router;
+export default sessionRouter;

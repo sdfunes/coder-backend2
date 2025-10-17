@@ -56,17 +56,25 @@ sessionRouter.post('/login', (req, res, next) => {
   })(req, res, next);
 });
 
-sessionRouter.get(
-  '/current',
-  passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    if (!req.user)
-      return res
-        .status(401)
-        .json({ status: 'error', message: 'No autorizado' });
-    const { password, ...userSafe } = req.user.toObject();
+sessionRouter.get('/current', (req, res, next) => {
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Error en la autenticación',
+      });
+    }
+
+    if (!user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Token inválido o no proporcionado',
+      });
+    }
+
+    const { password, ...userSafe } = user.toObject();
     res.json({ status: 'success', user: userSafe });
-  }
-);
+  })(req, res, next);
+});
 
 export default sessionRouter;

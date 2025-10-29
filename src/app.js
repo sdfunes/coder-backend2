@@ -1,5 +1,6 @@
 import express from 'express';
 import passport from 'passport';
+import cookieParser from 'cookie-parser';
 
 import mongoose from 'mongoose';
 import handlebars from 'express-handlebars';
@@ -9,7 +10,7 @@ import viewsRouter from './routes/views.router.js';
 import productsRouter from './routes/products.router.js';
 import { cartsRouter } from './routes/carts.router.js';
 import { initializePassport } from './config/passport.config.js';
-import { sessionRouter } from './routes/sessions.router.js';
+import sessionRouter from './routes/sessions.router.js';
 
 import Product from './dao/models/productsModel.js';
 
@@ -20,6 +21,7 @@ const PORT = config.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('./src/public'));
+app.use(cookieParser());
 initializePassport();
 app.use(passport.initialize());
 

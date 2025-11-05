@@ -14,15 +14,21 @@ cartsRouter.post('/', async (req, res) => {
   }
 });
 
-cartsRouter.get('/:cid', async (req, res) => {
-  try {
-    const cart = await cartManager.getCartById(req.params.cid);
-    if (!cart) return res.status(404).json({ error: 'Carrito no encontrado' });
-    res.json(cart);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+cartsRouter.get(
+  '/:cid',
+  passport.authenticate('jwt', { session: false }),
+  ensureOwnsCartOrAdmin(),
+  async (req, res) => {
+    try {
+      const cart = await cartManager.getCartById(req.params.cid);
+      if (!cart)
+        return res.status(404).json({ error: 'Carrito no encontrado' });
+      res.json(cart);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   }
-});
+);
 
 cartsRouter.post('/:cid/product/:pid', async (req, res) => {
   try {

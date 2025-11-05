@@ -58,18 +58,23 @@ router.get('/:pid', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
-  try {
-    const producto = await productManager.createProduct(req.body);
+router.post(
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  authorization('admin'),
+  async (req, res) => {
+    try {
+      const producto = await productManager.createProduct(req.body);
 
-    const io = req.app.get('socketio');
-    io.emit('productAdded', producto);
+      const io = req.app.get('socketio');
+      io.emit('productAdded', producto);
 
-    res.status(201).json(producto);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+      res.status(201).json(producto);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
-});
+);
 
 router.put('/:pid', async (req, res) => {
   try {

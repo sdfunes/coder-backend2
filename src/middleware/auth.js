@@ -1,14 +1,29 @@
-const auth = (req, res, next) => {
-  let { password } = req.query;
+export function authorization(requiredRole) {
+  return (req, res, next) => {
+    const user = req.user; // proviene de passport jwt 'current' strategy
+    if (!user) return res.status(401).json({ error: 'No autenticado' });
 
-  if (password != '123') {
-    res.setHeader('Content-Type', 'application/json');
-    return res
-      .status(400)
-      .json({ error: `Necesita password para eliminar un producto` });
-  }
+    if (requiredRole === 'user') {
+      // user-level access (ownership) (we allow: user or admin)
+      return next();
+    }
 
-  next();
-};
+    if (user.role !== requiredRole) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+    next();
+  };
+}
 
-module.exports = { auth };
+// ownership example middleware for carts
+export function ensureOwnsCartOrAdmin() {
+  return (req, res, next) => {
+    const user = req.user;
+    const cid = req.params.cid;
+    if (user.role === 'admin') return next();
+    if (user.cart && user.cart.toString() === cid) return next();
+    return res.status(403).json({ error: 'Solo el propietario puede acceder' });
+  };
+}
+
+export default { authorization, ensureOwnsCartOrAdmin };

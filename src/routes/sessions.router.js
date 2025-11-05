@@ -2,7 +2,7 @@ import { Router } from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/config.js';
-
+import UserDTO from '../dtos/UserDTO.js';
 const router = Router();
 
 router.post(
@@ -52,8 +52,8 @@ router.get(
   '/current',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    const { password, ...userSafe } = req.user.toObject();
-    res.json({ status: 'success', user: userSafe });
+    const userDto = new UserDTO(req.user);
+    res.json({ status: 'success', user: userDto });
   }
 );
 

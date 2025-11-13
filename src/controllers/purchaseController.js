@@ -1,9 +1,9 @@
 import purchaseService from '../services/PurchaseService.js';
 
 class PurchaseController {
-  async processPurchase(cid, userEmail) {
+  async processPurchase(cid, userId) {
     try {
-      const result = await purchaseService.purchaseCart(cid, userEmail);
+      const result = await purchaseService.purchaseCart(cid, userId);
       return result;
     } catch (error) {
       console.error('Error en PurchaseController.processPurchase:', error);

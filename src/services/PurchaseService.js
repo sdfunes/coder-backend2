@@ -1,35 +1,32 @@
 import ProductRepository from '../dao/repositories/ProductRepository.js';
 import CartRepository from '../dao/repositories/CartRepository.js';
-import Ticket from '../dao/models/ticket.model.js';
+import Ticket from '../dao/models/ticketsModel.js';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 
 const productRepo = new ProductRepository();
 const cartRepo = new CartRepository();
 
-export default class PurchaseService {
-  // intenta comprar todos los productos del carrito; si falta stock, los deja en el carrito
+class PurchaseService {
   async purchaseCart(cartId, purchaserId) {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-      const cart = await cartRepo.getByIdPopulated(cartId);
+      const cart = await cartRepo.getById(cartId);
       if (!cart) throw new Error('Carrito no encontrado');
 
       const purchased = [];
       const remaining = [];
-
       let totalAmount = 0;
 
       for (const item of cart.products) {
-        const product = await productRepo.findById(item.product._id);
+        const product = await productRepo.getProductById(item.product._id);
         if (!product) {
           remaining.push(item);
           continue;
         }
 
         if (product.stock >= item.quantity) {
-          // decrementar stock
           product.stock -= item.quantity;
           await product.save({ session });
 
@@ -41,12 +38,10 @@ export default class PurchaseService {
 
           totalAmount += product.price * item.quantity;
         } else {
-          // no hay stock suficiente -> queda en remaining (no comprado)
           remaining.push(item);
         }
       }
 
-      // generar ticket solo si hay items comprados
       let ticket = null;
       if (purchased.length > 0) {
         const code = crypto.randomBytes(6).toString('hex').toUpperCase();
@@ -63,7 +58,6 @@ export default class PurchaseService {
         );
       }
 
-      // actualizar carrito: dejar solamente remaining
       cart.products = remaining.map((r) => ({
         product: r.product._id,
         quantity: r.quantity,
@@ -72,8 +66,12 @@ export default class PurchaseService {
 
       await session.commitTransaction();
       session.endSession();
-
-      return { ticket: ticket ? ticket[0] : null, remaining };
+      return {
+        ticket: ticket
+          ? ticket[0]
+          : 'Ocurrió un error en la compra por falta de stock.',
+        remaining,
+      };
     } catch (err) {
       await session.abortTransaction();
       session.endSession();
@@ -81,3 +79,5 @@ export default class PurchaseService {
     }
   }
 }
+
+export default new PurchaseService();

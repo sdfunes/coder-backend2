@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
-import { config } from '../config/config.js';
+import jwt from 'jsonwebtoken';
+import { config } from './config/config.js';
 
 export const generaHash = (password) => {
   return bcrypt.hashSync(password, 10);
@@ -14,22 +14,17 @@ export function generateSecureToken(len = 48) {
   return crypto.randomBytes(len).toString('hex');
 }
 
-const transporter = nodemailer.createTransport({
-  host: config.EMAIL_HOST,
-  port: config.EMAIL_PORT,
-  auth: { user: config.EMAIL_USER, pass: config.EMAIL_PASS },
-});
+export const generateResetToken = (email) => {
+  return jwt.sign({ email }, config.RESET_TOKEN_SECRET, { expiresIn: '1h' });
+};
 
-export async function sendResetPasswordEmail(to, resetUrl) {
-  const html = `
-    <p>Has solicitado restablecer tu contraseña. Haz clic en el botón:</p>
-    <a href="${resetUrl}" style="background:#1a73e8;color:white;padding:10px 16px;border-radius:6px;text-decoration:none;">Restablecer contraseña</a>
-    <p>El enlace expirará en 1 hora.</p>
-  `;
-  return transporter.sendMail({
-    from: `"No Reply" <${config.EMAIL_USER}>`,
-    to,
-    subject: 'Restablecer contraseña',
-    html,
-  });
-}
+export const verifyResetToken = (token) => {
+  try {
+    return jwt.verify(token, config.RESET_TOKEN_SECRET);
+  } catch {
+    return null;
+  }
+};
+
+export const isValidPassword = (user, password) =>
+  bcrypt.compareSync(password, user.password);

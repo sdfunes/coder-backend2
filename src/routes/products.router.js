@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import ProductManager from '../dao/managers/ProductManager.js';
+import ProductsController from '../controllers/productsController.js';
+import { authorization } from '../middleware/auth.js';
+import passport from 'passport';
 
 const router = Router();
-const productManager = new ProductManager();
 
 router.get('/', async (req, res) => {
   try {
@@ -21,7 +22,8 @@ router.get('/', async (req, res) => {
       lean: true,
     };
 
-    const result = await productManager.getProducts(filter, options);
+    // 👇 ahora usamos await
+    const result = await ProductsController.getProducts(filter, options);
 
     res.json({
       status: 'success',
@@ -39,23 +41,22 @@ router.get('/', async (req, res) => {
         ? `/api/products?page=${result.nextPage}&limit=${limit}`
         : null,
     });
-  } catch (err) {
-    res.status(500).json({ status: 'error', message: err.message });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message,
+    });
   }
 });
 
-router.get('/:pid', async (req, res) => {
-  try {
-    const product = await productManager.getProductById(req.params.pid);
-    if (!product) {
-      return res
-        .status(404)
-        .json({ status: 'error', message: 'No encontrado' });
-    }
-    res.json(product);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+router.get('/:pid', (req, res) => {
+  const product = ProductsController.getById(req.params.pid);
+  if (!product) {
+    return res
+      .status(404)
+      .json({ status: 'error', message: 'Producto no encontrado' });
   }
+  res.json(product);
 });
 
 router.post(
@@ -64,36 +65,43 @@ router.post(
   authorization('admin'),
   async (req, res) => {
     try {
-      const producto = await productManager.createProduct(req.body);
+      const producto = await ProductsController.create(req.body);
 
       const io = req.app.get('socketio');
       io.emit('productAdded', producto);
 
-      res.status(201).json(producto);
+      res.status(201).json({
+        status: 'success',
+        producto,
+      });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      res.status(500).json({
+        status: 'error',
+        message: error.message,
+      });
     }
   }
 );
 
-router.put('/:pid', async (req, res) => {
-  try {
-    const updated = await productManager.updateProduct(
-      req.params.pid,
-      req.body
-    );
+router.put(
+  '/:pid',
+  passport.authenticate('jwt', { session: false }),
+  authorization('admin'),
+  async (req, res) => {
+    const updated = await ProductsController.update(req.params.pid, req.body);
     if (!updated) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
     res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
-router.delete('/:pid', async (req, res) => {
-  try {
-    const deleted = await productManager.deleteProduct(req.params.pid);
+router.delete(
+  '/:pid',
+  passport.authenticate('jwt', { session: false }),
+  authorization('admin'),
+  async (req, res) => {
+    const deleted = await ProductsController.delete(req.params.pid);
     if (!deleted) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
@@ -102,9 +110,7 @@ router.delete('/:pid', async (req, res) => {
     io.emit('productDeleted', req.params.pid);
 
     res.json({ status: 'success', message: 'Producto eliminado' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
 export default router;

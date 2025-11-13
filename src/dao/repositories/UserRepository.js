@@ -1,12 +1,23 @@
-import BaseRepository from './BaseRepository.js';
-import User from '../models/usersModel.js';
+import UsersDAO from '../UsersDAO.js';
 
-export default class UserRepository extends BaseRepository {
+export default class UsersRepository {
   constructor() {
-    super(User);
+    this.usersDAO = new UsersDAO();
   }
 
-  async findByEmail(email) {
-    return this.model.findOne({ email });
+  async getByEmail(email) {
+    return await this.usersDAO.getByEmail(email);
+  }
+
+  async getById(id) {
+    return await this.usersDAO.getById(id);
+  }
+
+  async createUser(userData) {
+    return await this.usersDAO.createUser(userData);
+  }
+
+  async updateUser(id, data) {
+    return await this.usersDAO.updateUser(id, data);
   }
 }

@@ -4,4 +4,5 @@ export const config = {
     'mongodb+srv://user:secretKey@coderbackend1.hyvmwfb.mongodb.net/?retryWrites=true&w=majority&appName=coderbackend1',
   DB_NAME: 'ecommerce',
   SECRET: 'secretKey',
+  RESET_TOKEN_SECRET: 'resetSecretKey',
 };

@@ -1,12 +1,25 @@
-import BaseRepository from './BaseRepository.js';
-import Product from '../models/producsModel.js';
+import Product from '../models/productsModel.js';
+import ProductsDAO from '../ProductsDAO.js';
 
-export default class ProductRepository extends BaseRepository {
-  constructor() {
-    super(Product);
+const productsDAO = new ProductsDAO(Product);
+export default class ProductsRepository {
+  async getProducts(filtro = {}) {
+    return await productsDAO.get(filtro);
   }
 
-  async findByCode(code) {
-    return this.model.findOne({ code });
+  async getProductById(id) {
+    return await productsDAO.getById({ _id: id });
+  }
+
+  async createProduct(product) {
+    return await productsDAO.save(product);
+  }
+
+  async updateProduct(id, product) {
+    return await productsDAO.update(id, product);
+  }
+
+  async deleteProduct(id) {
+    return await productsDAO.delete(id);
   }
 }

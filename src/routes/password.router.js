@@ -11,7 +11,7 @@ const userRepo = new UserRepository();
 router.post('/forgot', async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await userRepo.findByEmail(email);
+    const user = await userRepo.getByEmail(email);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     const token = generateSecureToken(24);

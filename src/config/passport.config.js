@@ -1,20 +1,11 @@
 import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
-import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
-import UserManager from '../dao/managers/UserManager.js';
-import CartManager from '../dao/managers/CartManager.js';
+import { Strategy as JwtStrategy } from 'passport-jwt';
+import { userService } from '../services/UserService.js';
+import { cartsService } from '../services/CartService.js';
 import { config } from './config.js';
 
-const userManager = new UserManager();
-const cartManager = new CartManager();
-
-const cookieExtractor = (req) => {
-  let token = null;
-  if (req && req.cookies) {
-    token = req.cookies['jwt'];
-  }
-  return token;
-};
+const cookieExtractor = (req) => req?.cookies?.jwt || null;
 
 export function initializePassport() {
   passport.use(
@@ -23,25 +14,25 @@ export function initializePassport() {
       { passReqToCallback: true, usernameField: 'email' },
       async (req, email, password, done) => {
         try {
-          const { first_name, last_name, age } = req.body;
+          const { first_name, last_name, age, role } = req.body;
           if (!first_name || !last_name || !email || !password)
             return done(null, false, { message: 'Campos incompletos' });
 
-          const exists = await userManager.getByEmail(email);
+          const exists = await userService.getByEmail(email.toLowerCase());
           if (exists)
             return done(null, false, { message: 'Email ya registrado' });
 
-          const cart = await cartManager.createCart();
-          const hashed = bcrypt.hashSync(password, 10);
+          const cart = await cartsService.create();
+          const hashed = await userService.hashPassword(password);
 
-          const newUser = await userManager.createUser({
+          const newUser = await userService.createUser({
             first_name,
             last_name,
-            email,
+            email: email.toLowerCase(),
             age,
             password: hashed,
             cart: cart._id,
-            role: 'user',
+            role: role || 'user',
           });
 
           return done(null, newUser);
@@ -55,26 +46,16 @@ export function initializePassport() {
   passport.use(
     'login',
     new LocalStrategy(
-      {
-        usernameField: 'email',
-        passwordField: 'password',
-        passReqToCallback: true,
-      },
+      { usernameField: 'email', passReqToCallback: true },
       async (req, email, password, done) => {
         try {
-          if (!email || !password) {
-            return done(null, false, { message: 'Credenciales incompletas' });
-          }
-
-          const user = await userManager.getByEmail(email);
-          if (!user) {
+          const user = await userService.getByEmail(email.toLowerCase());
+          if (!user)
             return done(null, false, { message: 'Usuario no encontrado' });
-          }
 
-          const valid = await userManager.validatePassword(user, password);
-          if (!valid) {
+          const valid = await userService.validatePassword(user, password);
+          if (!valid)
             return done(null, false, { message: 'Contraseña inválida' });
-          }
 
           return done(null, user);
         } catch (err) {
@@ -87,13 +68,10 @@ export function initializePassport() {
   passport.use(
     'jwt',
     new JwtStrategy(
-      {
-        jwtFromRequest: cookieExtractor,
-        secretOrKey: config.SECRET,
-      },
+      { jwtFromRequest: cookieExtractor, secretOrKey: config.SECRET },
       async (jwt_payload, done) => {
         try {
-          const user = await userManager.getById(jwt_payload.sub);
+          const user = await userService.getById(jwt_payload.sub);
           if (!user)
             return done(null, false, { message: 'Token o usuario inválido' });
           return done(null, user);

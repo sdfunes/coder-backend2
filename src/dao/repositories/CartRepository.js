@@ -1,12 +1,25 @@
-import BaseRepository from './BaseRepository.js';
-import Cart from '../models/cartsModel.js';
+import CartsDAO from '../CartsDAO.js';
+import cartModel from '../models/cartsModel.js';
 
-export default class CartRepository extends BaseRepository {
-  constructor() {
-    super(Cart);
+const cartsDAO = new CartsDAO(cartModel);
+export default class CartsRepository {
+  async createCart() {
+    return await cartsDAO.create();
   }
 
-  async getByIdPopulated(id) {
-    return this.model.findById(id).populate('products.product');
+  async getById(id) {
+    return await cartsDAO.getById({ _id: id });
+  }
+
+  async updateCart(id, cart, quantity) {
+    return await cartsDAO.update(id, cart, quantity);
+  }
+
+  async deleteCartById(cid) {
+    return await cartsDAO.deleteCartById(cid);
+  }
+
+  async deleteProductFromCart(cid, pid) {
+    return await cartsDAO.deleteProductFromCart(cid, pid);
   }
 }

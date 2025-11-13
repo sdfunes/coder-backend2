@@ -1,10 +1,9 @@
 export function authorization(requiredRole) {
   return (req, res, next) => {
-    const user = req.user; // proviene de passport jwt 'current' strategy
+    const user = req.user;
     if (!user) return res.status(401).json({ error: 'No autenticado' });
 
     if (requiredRole === 'user') {
-      // user-level access (ownership) (we allow: user or admin)
       return next();
     }
 
@@ -15,7 +14,6 @@ export function authorization(requiredRole) {
   };
 }
 
-// ownership example middleware for carts
 export function ensureOwnsCartOrAdmin() {
   return (req, res, next) => {
     const user = req.user;
